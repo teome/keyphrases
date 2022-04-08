@@ -114,7 +114,7 @@ class Keyphrases:
 
     # def matches(self, words: List[str]) -> List[Token]
 
-    def match_sentences(keyphrases: List[str]) -> List[str]:
+    def match_sentences(self, keyphrases: List[str]) -> List[str]:
         """Finds all sentences containing keyphrase strings (words or phrases)
 
         Uses spaCy matching to find all sentences for each word or phrase
