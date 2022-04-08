@@ -1,6 +1,10 @@
-from typing import List
+from typing import List, Optional
 from keyphrase_vectorizers import KeyphraseCountVectorizer
 from keyphrases.textdata import TextData
+
+import spacy
+from spacy.matcher import Matcher
+from spacy.tokens import Span, Token
 
 
 class Keyphrases:
@@ -98,9 +102,50 @@ class Keyphrases:
         kp_matrix = kp_matrix[ixs]
         feature_names = feature_names[ixs]
 
-        self._keyphrase_matrix_filtered = kp_matrix
-        self._feature_names_filtered = feature_names
+        # TODO: Should these be set to new variables or overwrite if we don't
+        # need the originals
+        self._keyphrase_matrix = kp_matrix
+        self._feature_names = feature_names
 
         # TODO sort
 
-    # def match(self, words: List[str]) -> TODO
+    def _filter_by_semantic_similarity(self, n_topk=20):
+        raise NotImplementedError()
+
+    # def matches(self, words: List[str]) -> List[Token]
+
+    def match_sentences(keyphrases: List[str]) -> List[str]:
+        """Finds all sentences containing keyphrase strings (words or phrases)
+
+        Uses spaCy matching to find all sentences for each word or phrase
+        There is also the `~.matches()` method which does the same matching
+        but returns span objects instead which are more flexible and maintain
+        all spaCy functionality
+
+        Args:
+            keyphrases (List[str]): a list of keyphrases (words or phrases)
+                to find
+
+        Returns:
+            list[str]: a list of strings for each sentence containing a
+                keyphrase
+        """
+        if not keyphrases:
+            raise ValueError("`keyphrases` cannot be an empty list")
+
+        nlp = spacy.load("en_core_web_sm")
+        matcher = Matcher(nlp.vocab)
+
+        # Construct match objects
+        patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in keyphrases]
+        matcher.add(patterns)
+
+        file_occurances = {}
+        sentences = {}
+        for filename, doc_string in zip(self._text_data.filenames, self._text_data):
+            doc = nlp(doc_string)
+            matches = matcher(doc, as_spans=True)
+            for span in matches:
+                kp = span.text
+                file_occurances.get(kp, set()).add(filename)
+                sentences.get(kp, []).append(span.sent)
