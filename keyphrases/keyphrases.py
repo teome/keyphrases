@@ -1,10 +1,12 @@
+import logging
 from typing import List, Optional
 from keyphrase_vectorizers import KeyphraseCountVectorizer
 from keyphrases.textdata import TextData
-
 import spacy
 from spacy.matcher import Matcher
 from spacy.tokens import Span, Token
+
+logger = logging.getLogger(__name__)
 
 
 class Keyphrases:
@@ -53,8 +55,10 @@ class Keyphrases:
         self._feature_names = feature_names
         self._keyphrase_matrix = keyphrase_matrix
 
-    def _filter_by_frequency(
-        self, total_freq_thresh: int = None, cross_doc_freq_thresh: int = None
+    def filter_by_frequency(
+        self,
+        total_freq_thresh: Optional[int] = None,
+        cross_doc_freq_thresh: Optional[int] = None,
     ):
         """Filter common word results by frequency thresholds
 
@@ -85,34 +89,33 @@ class Keyphrases:
         ixs[ixs > 0] = 1
         ixs = ixs.sum(axis=0) >= cross_doc_freq_thresh
 
-        # Use this as indices into the original keyphrase matrix, zero then
-        # check totals
-        # kp_matrix = self._keyphrase_matrix.copy()
-        # kp_matrix[~ixs[None, :].repeat(kp_matrix.shape[0], axis=0)] = 0
-
-        # ixs = kp_matrix.sum(axis=0) >= total_freq_thresh
-        # ixs = ixs[None, :].repeat(kp_matrix.shape[0], axis=0)
-        # kp_matrix = kp_matrix[ixs]
-        # feature_names = feature_names[ixs]
-
+        # Zero out any frequencies for words that don't occur in enough
+        # documents, regardless of how may times in each
         kp_matrix = self._keyphrase_matrix.sum(axis=0)
         kp_matrix[~ixs] = 0
 
         ixs = kp_matrix >= total_freq_thresh
+        # We want a per-doc matrix so we have filtered words and their
+        # occurance in each doc, and a matrix for the filtered words
+        # accumulated across all docs
+        self._per_doc_keyphrase_matrix = self._keyphrase_matrix.copy()
+        self._per_doc_keyphrase_matrix[
+            ~ixs[None, :].repeat(self._per_doc_keyphrase_matrix.shape[0], axis=0)
+        ] = 0
+
+        # Keep words whose totals across all docs are above threshold
         kp_matrix = kp_matrix[ixs]
         feature_names = feature_names[ixs]
 
-        # TODO: Should these be set to new variables or overwrite if we don't
-        # need the originals
         self._keyphrase_matrix = kp_matrix
         self._feature_names = feature_names
 
-        # TODO sort
+    def sort(self, reverse: bool = True):
+        raise NotImplementedError
 
     def _filter_by_semantic_similarity(self, n_topk=20):
+        # TODO Use KeyBERT to get the semantic similarity of each word
         raise NotImplementedError()
-
-    # def matches(self, words: List[str]) -> List[Token]
 
     def match_sentences(self, keyphrases: List[str]) -> List[str]:
         """Finds all sentences containing keyphrase strings (words or phrases)
@@ -137,6 +140,7 @@ class Keyphrases:
         matcher = Matcher(nlp.vocab)
 
         # Construct match objects
+        # Multi-word (phrases) need to be split for each word to
         patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in keyphrases]
         matcher.add(patterns)
 
