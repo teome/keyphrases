@@ -1,12 +1,33 @@
+from dataclasses import dataclass, field
 import logging
 from typing import List, Optional
 from keyphrase_vectorizers import KeyphraseCountVectorizer
+from soupsieve import match
 from keyphrases.textdata import TextData
 import spacy
 from spacy.matcher import Matcher
 from spacy.tokens import Span, Token
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Keyphrase:
+    text: str
+    spans: List[Span] = field(default_factory=list)
+    filenames: List[str] = field(default_factory=list)
+
+    @property
+    def sentences(self):
+        return [s.sent.text.replace("\n", "") for s in self.spans]
+
+    def add_keyphrase(self, span: Span, filename: str):
+        if span.text != self.text:
+            raise ValueError(
+                f"Invalid span {span.text} to correspond with text {self.text}"
+            )
+        self.spans.append(span)
+        self.filenames.append(filename)
 
 
 class Keyphrases:
@@ -102,6 +123,7 @@ class Keyphrases:
         self._per_doc_keyphrase_matrix[
             ~ixs[None, :].repeat(self._per_doc_keyphrase_matrix.shape[0], axis=0)
         ] = 0
+        self._feature_names_complete = self._feature_names.copy()
 
         # Keep words whose totals across all docs are above threshold
         kp_matrix = kp_matrix[ixs]
@@ -117,7 +139,9 @@ class Keyphrases:
         # TODO Use KeyBERT to get the semantic similarity of each word
         raise NotImplementedError()
 
-    def match_sentences(self, keyphrases: List[str]) -> List[str]:
+    def match_sentences(
+        self, match_keyphrases: Optional[List[str]] = None
+    ) -> List[str]:
         """Finds all sentences containing keyphrase strings (words or phrases)
 
         Uses spaCy matching to find all sentences for each word or phrase
@@ -126,30 +150,73 @@ class Keyphrases:
         all spaCy functionality
 
         Args:
-            keyphrases (List[str]): a list of keyphrases (words or phrases)
-                to find
+            match_keyphrases (Optional[List[str]]): a list of keyphrases
+                (words or phrases) to find. Default is None meaning we use
+                the internal values for `~.feature_names` frequent phrases
 
         Returns:
             list[str]: a list of strings for each sentence containing a
                 keyphrase
         """
-        if not keyphrases:
-            raise ValueError("`keyphrases` cannot be an empty list")
-
         nlp = spacy.load("en_core_web_sm")
         matcher = Matcher(nlp.vocab)
 
         # Construct match objects
         # Multi-word (phrases) need to be split for each word to
-        patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in keyphrases]
-        matcher.add(patterns)
+        # patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in keyphrases]
+        # matcher.add(patterns)
 
-        file_occurances = {}
-        sentences = {}
-        for filename, doc_string in zip(self._text_data.filenames, self._text_data):
+        matched_sentences = {}
+        for i, (filename, doc_string) in enumerate(
+            zip(self._text_data.filenames, self._text_data)
+        ):
+            # Construct match objects
+            # Multi-word (phrases) need to be split for each word to
+            if match_keyphrases is not None:
+                match_kps = match_keyphrases
+            else:
+                # use internal frequent values for this doc
+                match_kps = self._feature_names_complete[
+                    self._per_doc_keyphrase_matrix[i] > 0
+                ]
+            patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in match_kps]
+            matcher.add("featurenames", patterns)
+
             doc = nlp(doc_string)
             matches = matcher(doc, as_spans=True)
             for span in matches:
-                kp = span.text
-                file_occurances.get(kp, set()).add(filename)
-                sentences.get(kp, []).append(span.sent)
+                kp_text = span.text
+                if kp_text not in matched_sentences:
+                    kp = Keyphrase(kp_text)
+                    matched_sentences[kp_text] = kp
+                else:
+                    kp = matched_sentences[kp_text]
+                kp.add_keyphrase(span, filename)
+                logging.debug("File: %s | phrase: %s\n\t%s", filename, kp, span.sent)
+
+        self.matched_sentences = matched_sentences
+        return matched_sentences
+
+        # file_occurances = {}
+        # sentences = {}
+        # for filename, doc_string in zip(self._text_data.filenames, self._text_data):
+        #     doc = nlp(doc_string)
+        #     matches = matcher(doc, as_spans=True)
+        #     for span in matches:
+        #         kp = span.text
+        #         file_occurances.get(kp, set()).add(filename)
+        #         sentences.get(kp, []).append(span.sent)
+        #         logging.debug("File: %s | phrase: %s\n\t%s", filename, kp, span.sent)
+
+        """
+        span
+        sent
+        filename
+        
+
+        for s in span
+            span
+            all_filenames = span_filenames[span]
+            all_sents = 
+        
+        """

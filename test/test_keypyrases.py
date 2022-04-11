@@ -19,14 +19,19 @@ def test_filter_by_frequency():
 
 
 def test_filter_by_frequency_shapes():
+    """Ensure we maintain correct dimensions"""
     keyphrases = Keyphrases(FILEPATTERN)
     keyphrases.filter_by_frequency(6, 2)
-    assert keyphrases._keyphrase_matrix.min() >= 2
+    assert keyphrases._per_doc_keyphrase_matrix.shape == (2, 756)
+    assert keyphrases._keyphrase_matrix.shape == (64,)
+    assert keyphrases._feature_names.shape == (64,)
 
 
 def test_match_sentences(caplog):
     caplog.set_level(logging.DEBUG)
-    keyphrases = Keyphrases(FILEPATTERN)
+    keyphrases = Keyphrases(FILEPATTERN, 28, 2)
+    keyphrases.filter_by_frequency()
+    keyphrases.match_sentences()
 
 
 def test_nomatch():
