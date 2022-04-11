@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Frequent Interesting Words</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header><h1>Frequently Interesting Words</h1></header>
+    <table>
+      <thead>
+        <tr>
+          <th>Word</th>
+          <th>Documents</th>
+          <th>Sentences</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for word in sorted_words %}
+          <tr>
+            <td>{{ word }}</td>
+            <td>{{ keyphrase_matches[word].filenames|unique|list|join(',') }}</td>
+            <td>{{ keyphrase_matches[word].sentences|join('\n') }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div id="footer">
+        &copy; Copyright 2022 by Dom Kelly</a>.
+    </div>
+</body>
+</html>

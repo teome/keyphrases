@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import logging
+from jinja2 import Environment, PackageLoader, select_autoescape
 from typing import List, Optional
 from keyphrase_vectorizers import KeyphraseCountVectorizer
 from soupsieve import match
@@ -22,7 +23,7 @@ class Keyphrase:
         return [s.sent.text.replace("\n", "") for s in self.spans]
 
     def add_keyphrase(self, span: Span, filename: str):
-        if span.text != self.text:
+        if span.text.lower() != self.text.lower():
             raise ValueError(
                 f"Invalid span {span.text} to correspond with text {self.text}"
             )
@@ -73,8 +74,8 @@ class Keyphrases:
         # This function can't deal with generators annoyingly
         text_content = list(self._text_data)
         feature_names, keyphrase_matrix = self.run_vectorizer(text_content, pos_pattern)
-        self._feature_names = feature_names
-        self._keyphrase_matrix = keyphrase_matrix
+        self.feature_names = feature_names
+        self.keyphrase_matrix = keyphrase_matrix
 
     def filter_by_frequency(
         self,
@@ -102,8 +103,8 @@ class Keyphrases:
         total_freq_thresh = total_freq_thresh or self._total_freq_thresh
         cross_doc_freq_thresh = cross_doc_freq_thresh or self._cross_doc_freq_thresh
 
-        ixs = self._keyphrase_matrix.copy()
-        feature_names = self._feature_names
+        ixs = self.keyphrase_matrix.copy()
+        feature_names = self.feature_names
 
         # Filter according to occurance in each doc
         # Binarise occurance and sum across all docs
@@ -112,25 +113,25 @@ class Keyphrases:
 
         # Zero out any frequencies for words that don't occur in enough
         # documents, regardless of how may times in each
-        kp_matrix = self._keyphrase_matrix.sum(axis=0)
+        kp_matrix = self.keyphrase_matrix.sum(axis=0)
         kp_matrix[~ixs] = 0
 
         ixs = kp_matrix >= total_freq_thresh
         # We want a per-doc matrix so we have filtered words and their
         # occurance in each doc, and a matrix for the filtered words
         # accumulated across all docs
-        self._per_doc_keyphrase_matrix = self._keyphrase_matrix.copy()
+        self._per_doc_keyphrase_matrix = self.keyphrase_matrix.copy()
         self._per_doc_keyphrase_matrix[
             ~ixs[None, :].repeat(self._per_doc_keyphrase_matrix.shape[0], axis=0)
         ] = 0
-        self._feature_names_complete = self._feature_names.copy()
+        self.feature_names_complete = self.feature_names.copy()
 
         # Keep words whose totals across all docs are above threshold
         kp_matrix = kp_matrix[ixs]
         feature_names = feature_names[ixs]
 
-        self._keyphrase_matrix = kp_matrix
-        self._feature_names = feature_names
+        self.keyphrase_matrix = kp_matrix
+        self.feature_names = feature_names
 
     def sort(self, reverse: bool = True):
         raise NotImplementedError
@@ -176,7 +177,7 @@ class Keyphrases:
                 match_kps = match_keyphrases
             else:
                 # use internal frequent values for this doc
-                match_kps = self._feature_names_complete[
+                match_kps = self.feature_names_complete[
                     self._per_doc_keyphrase_matrix[i] > 0
                 ]
             patterns = [[{"LOWER": s} for s in kp.split(" ")] for kp in match_kps]
@@ -185,38 +186,36 @@ class Keyphrases:
             doc = nlp(doc_string)
             matches = matcher(doc, as_spans=True)
             for span in matches:
-                kp_text = span.text
+                kp_text = span.text.lower()
                 if kp_text not in matched_sentences:
                     kp = Keyphrase(kp_text)
                     matched_sentences[kp_text] = kp
                 else:
                     kp = matched_sentences[kp_text]
                 kp.add_keyphrase(span, filename)
-                logging.debug("File: %s | phrase: %s\n\t%s", filename, kp, span.sent)
+                logging.debug(
+                    "File: %s | phrase: %s\n\t%s", filename, kp_text, span.sent
+                )
 
         self.matched_sentences = matched_sentences
         return matched_sentences
 
-        # file_occurances = {}
-        # sentences = {}
-        # for filename, doc_string in zip(self._text_data.filenames, self._text_data):
-        #     doc = nlp(doc_string)
-        #     matches = matcher(doc, as_spans=True)
-        #     for span in matches:
-        #         kp = span.text
-        #         file_occurances.get(kp, set()).add(filename)
-        #         sentences.get(kp, []).append(span.sent)
-        #         logging.debug("File: %s | phrase: %s\n\t%s", filename, kp, span.sent)
+    def render(self):
+        env = Environment(
+            loader=PackageLoader("keyphrases"), autoescape=select_autoescape
+        )
+        template = env.get_template("render_template.html")
+        # TODO sort
+        render_html = template.render(
+            sorted_words=list(self.matched_sentences.keys()),
+            keyphrase_matches=self.matched_sentences,
+        )
+        print(render_html)
+        with open("render_out.html", "w") as f:
+            f.write(render_html)
 
-        """
-        span
-        sent
-        filename
-        
+        return render_html
 
-        for s in span
-            span
-            all_filenames = span_filenames[span]
-            all_sents = 
-        
-        """
+    def match_and_render(self):
+        self.match_sentences()
+        self.render()
