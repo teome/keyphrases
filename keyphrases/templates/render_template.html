@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <title>Frequent Interesting Words</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href={{ css_path }} type="text/css" />
 </head>
+<div id="top" class="page" role="document"> 
 <body>
   <header><h1>Frequently Interesting Words</h1></header>
     <table>
@@ -17,10 +18,23 @@
       <tbody>
         {% for word in sorted_words %}
           <tr>
-            <td>{{ word }}</td>
-            <td>{{ keyphrase_matches[word].filenames|unique|list|join(',') }}</td>
-            <td>{{ keyphrase_matches[word].sentences|join('\n') }}</td>
+            <td rowspan="{{keyphrase_matches[word].sentences|length}}">{{ word }}</td>
+            <td rowspan="{{keyphrase_matches[word].sentences|length}}">{{ keyphrase_matches[word].filenames|unique|list|join(',') }}</td>
+            <td>{{ keyphrase_matches[word].sentences[0] }}</td>
           </tr>
+          {% for sentence in keyphrase_matches[word].sentences[1:] %}
+          <tr>
+            <!-- <td>{{ sentence|replace(word, "<b>{}</b>".format(word)) }}</td> -->
+
+            <td>
+              {% for s in sentence %}
+                <!-- {{ "<b>{}</b>".format(s) if s == word else s }} -->
+                <span style="font-weight: {{ 800 if s == word else 400 }}">{{ s }}</span>
+                <!-- <span style="{{ s }} ff -->
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
         {% endfor %}
       </tbody>
     </table>
@@ -28,4 +42,5 @@
         &copy; Copyright 2022 by Dom Kelly</a>.
     </div>
 </body>
+</div>
 </html>

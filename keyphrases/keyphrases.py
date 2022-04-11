@@ -20,7 +20,12 @@ class Keyphrase:
 
     @property
     def sentences(self):
-        return [s.sent.text.replace("\n", "") for s in self.spans]
+        # return [s.sent.text.replace("\n", "") for s in self.spans]
+        # return [
+        #     s.sent.text.replace("\n", "").replace(self.text, f"<b>{self.text}</b>")
+        #     for s in self.spans
+        # ]
+        return [s.sent.text.replace("\n", "").split(" ") for s in self.spans]
 
     def add_keyphrase(self, span: Span, filename: str):
         if span.text.lower() != self.text.lower():
@@ -209,6 +214,7 @@ class Keyphrases:
         render_html = template.render(
             sorted_words=list(self.matched_sentences.keys()),
             keyphrase_matches=self.matched_sentences,
+            css_path="keyphrases/templates/style.css",
         )
         print(render_html)
         with open("render_out.html", "w") as f:
