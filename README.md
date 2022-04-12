@@ -88,3 +88,7 @@ There are a small number of tests in the `tests` directory. They are far from ex
 ## Current state
 
 The module is exemplary rather than feature complete giving an example of some directions that could be taken. The most useful next step would likely be the implementation of semantic searching and analysing semantic similarity for each found phrase and the rest of the text. This would not need much work from the current state but would greatly enhance the functionality and depth of linguistic analysis.
+
+## Security and escaping
+
+There should be some additional check on the escaping of strings to be rendered as HTML. This is performed for all but the keyword phrases. For now it is assumed that they are safe but if taken further this would need to be verified as safe. As this is a demonstration I will not go that far for now.
