@@ -22,7 +22,7 @@
             <td>
               {{ keyphrase_match.filenames[0] }}</td>
             <td>
-              {{ keyphrase_match.sentences[0]|regex_sub(keyphrase, "keyphrase") }}
+              {{ keyphrase_match.sentences[0]|regex_sub(keyphrase_match.text, "keyphrase") }}
             </td>
           </tr>
           {% for sentence in keyphrase_match.sentences[1:] %}
