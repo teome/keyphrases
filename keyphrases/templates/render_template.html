@@ -6,34 +6,32 @@
 </head>
 <div id="top" class="page" role="document"> 
 <body>
-  <header><h1>Frequently Interesting Words</h1></header>
+  <header><div class="subhead"><h1>Frequently Interesting Words</h1></div></header>
     <table>
       <thead>
         <tr>
-          <th>Word</th>
+          <th>Word (frequency)</th>
           <th>Documents</th>
           <th>Sentences</th>
         </tr>
       </thead>
       <tbody>
-        {% for word in sorted_words %}
+        {% for keyphrase_match in keyphrase_matches %}
           <tr>
-            <td rowspan="{{keyphrase_matches[word].sentences|length}}">{{ word }}</td>
-            <td rowspan="{{keyphrase_matches[word].sentences|length}}">{{ keyphrase_matches[word].filenames|unique|list|join(',') }}</td>
-            <td>{{ keyphrase_matches[word].sentences[0] }}</td>
-          </tr>
-          {% for sentence in keyphrase_matches[word].sentences[1:] %}
-          <tr>
-            <!-- <td>{{ sentence|replace(word, "<b>{}</b>".format(word)) }}</td> -->
-
+            <td rowspan="{{keyphrase_match.sentences|length}}" class="keyphrase">{{ keyphrase_match.text ~ " (" ~ keyphrase_match.count ~ ")" }}</td>
             <td>
-              {% for s in sentence %}
-                <!-- {{ "<b>{}</b>".format(s) if s == word else s }} -->
-                <span style="font-weight: {{ 800 if s == word else 400 }}">{{ s }}</span>
-                <!-- <span style="{{ s }} ff -->
-              {% endfor %}
+              {{ keyphrase_match.filenames[0] }}</td>
+            <td>
+              {{ keyphrase_match.sentences[0]|regex_sub(keyphrase, "keyphrase") }}
             </td>
           </tr>
+          {% for sentence in keyphrase_match.sentences[1:] %}
+            <tr>
+              <td>{{ keyphrase_match.filenames[loop.index] }}</td>
+              <td>
+                {{ sentence|regex_sub(keyphrase_match.text, "keyphrase") }}
+              </td>
+            </tr>
           {% endfor %}
         {% endfor %}
       </tbody>
