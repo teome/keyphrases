@@ -38,7 +38,7 @@ def test_match_sentences(caplog):
 
 def test_render(caplog):
     caplog.set_level(logging.INFO)
-    keyphrases = Keyphrases(FILEPATTERN, 28, 2)
+    keyphrases = Keyphrases(FILEPATTERN, 2, 2, "<J.*>*<N.*>+")
     keyphrases.filter_by_frequency()
     matches = keyphrases.match_sentences()
     keyphrases.render()
