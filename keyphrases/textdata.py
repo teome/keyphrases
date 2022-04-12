@@ -40,8 +40,3 @@ class TextData:
     def fulltext(self) -> str:
         all_text = [t.replace("\n", "") for t in self]
         return " ".join(all_text)
-
-    # word - text: str
-    #      - pos: str
-    #      - docs: list
-    #      - sents - [(doc: str, idx: int)]
