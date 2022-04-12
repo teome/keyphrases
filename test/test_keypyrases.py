@@ -42,8 +42,3 @@ def test_render(caplog):
     keyphrases.filter_by_frequency()
     matches = keyphrases.match_sentences()
     keyphrases.render()
-
-
-# def test_nomatch():
-#     """Ensure we return with nothing but raise no errors"""
-#     raise NotImplementedError
