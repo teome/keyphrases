@@ -1,2 +1,21 @@
 @import "https://unpkg.com/open-props";
 @import "https://unpkg.com/open-props/normalize.min.css";
+
+
+td {
+  vertical-align: top;
+}
+
+th {
+  vertical-align: top;
+  color: var(--violet-2);
+}
+
+h1 {
+  color: var(--violet-7);
+}
+
+.keyphrase {
+  font-weight: var(--font-weight-7);
+  color: var(--teal-1);
+}
