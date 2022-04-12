@@ -259,7 +259,6 @@ class Keyphrases:
             keyphrase_matches=keyphrases_sorted,
             css_path="keyphrases/templates/style.css",
         )
-        print(render_html)
         with open(output_filename, "w") as f:
             f.write(render_html)
 
