@@ -304,10 +304,17 @@ if __name__ == "__main__":
         default="<J.*>*<N.*>+",
         help="Part of Speech pattern defining keyphrase. Use `<N.*>` for a single noun",
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="keyphrases.html",
+        help="Output HTML filename",
+    )
     args = parser.parse_args()
     keyphrases = Keyphrases(
         args.glob_pattern, args.thresh_total, args.thresh_cross_text, args.pos_pattern
     )
     keyphrases.filter_by_frequency()
     matches = keyphrases.match_sentences()
-    _ = keyphrases.render()
+    _ = keyphrases.render(args.output)
