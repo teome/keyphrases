@@ -7,7 +7,9 @@ The keyphrases can be filtered in two independent ways using thresholds:
 - On the total frequency of the phrase occurance
 - On the number of files in which the phrase occurs, independent on the number of times in each
 
-A simple approach of just counting each word and sorting by the highest frequency is not taken in favour of a far more flexible and extensible approach using POS and CountVectorizers.
+## Motivation for this approach
+
+A simple approach of just counting each word and sorting by the highest frequency is not taken in favour of a far more flexible and extensible approach using POS and CountVectorizers. This deals with stopwords (ignoring e.g. 'and', 'the' etc.) and allows phrases and words rather than just words. Using `spaCy` is also a big benefit as any more complex NLP application would need to use this or a similar library.
 
 ## Results rendering
 
@@ -78,3 +80,11 @@ keyphrases.filter_by_frequency()
 matches = keyphrases.match_sentences()
 keyphrases.render('render_output.html')
 ```
+
+## Tests
+
+There are a small number of tests in the `tests` directory. They are far from exhaustive, more showing the type of tests that might be written if this was taken further as a project.
+
+## Current state
+
+The module is exemplary rather than feature complete giving an example of some directions that could be taken. The most useful next step would likely be the implementation of semantic searching and analysing semantic similarity for each found phrase and the rest of the text. This would not need much work from the current state but would greatly enhance the functionality and depth of linguistic analysis.
