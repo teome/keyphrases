@@ -72,6 +72,16 @@ optional arguments:
 A typical use for a directory `data` containing text files, a keyphrase defined by zero or more adjectives and one or more nouns, filtering by at least a total of 3 occurances and occuring in 2 files would look like
 
 ```python
+python -m keyphrases.keyphrases -g './data/*.txt' -t 3 -c 2 -p '<J.*>*<N.*>+'
+
+# Or the default arguments are the same but with -t 2, so we can supply just that
+python -m keyphrases.keyphrases -t 3
+
+```
+
+The same outcome but using the module within python code can be achieved with the following code
+
+```python
 from keyphrases import Keyphrases
 
 keyphrases = Keyphrases('./data/*.txt', 3, 2, '<J.*>*<N.*>+')
