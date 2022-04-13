@@ -1,5 +1,7 @@
 # Frequently Interesting Words
 
+_Author - Dom Kelly - 2022_
+
 Simple module which analyses a set of text files to find keyphrases. The keyphrases are specified using a Parts of Speech (POS) pattern which allows for a lot of flexibility, from just looking for key words (e.g. nouns) to more complex phrases composed of an adjective followed by a noun.
 
 The keyphrases can be filtered in two independent ways using thresholds:
