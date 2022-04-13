@@ -19,6 +19,8 @@ The results can be rendered in HTML form as a table showing for each each word/p
 - Sentence containing the word/phrase
 - The file the phrase and sentence was found in
 
+The HTML can be opened and viewed in any modern web browser, e.g. `Chrome`.
+
 ## Libraries
 
 - Under the hood [spacy](https://spacy.io) is used for a lot of the text processing.
@@ -27,6 +29,8 @@ The results can be rendered in HTML form as a table showing for each each word/p
 It's not currently implemented but these libraries easily allow for extending the approach to use more advance NLP, e.g. language models to calculate the semantic similarity of each keyphrase to the documents themselves, and to find semantically similar sentences.
 
 ## Installation
+
+It is written in `Python` and uses `Jinja2` to create the HTML displaying the results. Development was done using `Python 3.9` so I would recommend using `>=3.9`. Anything above `3.6` should work but is untested.
 
 The easiest installation is via pip. As is standard, I would recommend installing into a viatual environment either via `venv`
 
@@ -66,6 +70,8 @@ optional arguments:
 A typical use for a directory `data` containing text files, a keyphrase defined by zero or more adjectives and one or more nouns, filtering by at least a total of 3 occurances and occuring in 2 files would look like
 
 ```python
+from keyphrases import Keyphrases
+
 keyphrases = Keyphrases('./data/*.txt', 3, 2, '<J.*>*<N.*>+')
 keyphrases.filter_by_frequency()
 matches = keyphrases.match_sentences()
@@ -75,6 +81,8 @@ keyphrases.render('render_output.html')
 Or to find only the most common interesting words, we can achive this using the noun POS
 
 ```python
+from keyphrases import Keyphrases
+
 keyphrases = Keyphrases('./data/*.txt', 1, 1, '<N.*>')
 keyphrases.filter_by_frequency()
 matches = keyphrases.match_sentences()
