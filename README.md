@@ -112,3 +112,6 @@ The module is exemplary rather than feature complete giving an example of some d
 ## Security and escaping
 
 There should be some additional check on the escaping of strings to be rendered as HTML. This is performed for all but the keyword phrases. For now it is assumed that they are safe but if taken further this would need to be verified as safe. As this is a demonstration I will not go that far for now.
+
+## TODO
+Implement semantic similarity using [sentence-transformers](https://sbert.net) or KeyBERT. The current codebase is implemented to make this a very straightforward addition 
